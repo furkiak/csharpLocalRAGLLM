@@ -1,56 +1,71 @@
 # C# Local RAG LLM (DeepSeek- Embeding - VectorDB) - .NET Core
 
-Proje Amacı:
-Python Server ve C# Client Üzerinden Local olarak yapay zeka modellerini çalıştırmak, dosyalarınızı analiz ederek bu dosyaları vectorDB'ye eklemek ve yönetmek daha sonrada bu dökümanlar üzerinden ve llm bilgileri üzerinden sorgu yapmanızı sağlamak.
+## Project Objective (Proje Amacı):
+To run AI models locally via a Python server and a C# client, analyze documents, add and manage them in a vector database (VectorDB), and enable querying based on both the stored documents and the LLM (Large Language Model) knowledge.
 
-# Python Server Kısmı
+(Python Server ve C# Client Üzerinden Local olarak yapay zeka modellerini çalıştırmak, dosyalarınızı analiz ederek bu dosyaları vectorDB'ye eklemek ve yönetmek daha sonrada bu dökümanlar üzerinden ve llm bilgileri üzerinden sorgu yapmanızı sağlamak.)
 
-# Kullanılan Python Sürümü: 3.10.x
+## Python Server Section (Python Server Kısmı)
 
-# Gerekli Yüklemeler:  
+
+### Used Python Version (Kullanılan Python Sürümü): 3.10.x
+### Example Model (Örnek Model): DeepSeek-r1:1.5b
+
+### Required Installations (Gerekli Yüklemeler):  
+```
 pip install fastapi uvicorn torch transformers safetensors chromadb
-
-# Alternatif VectorDB ve Embeding Modelleri: 
+```
+### Alternative VectorDB and Embedding Models (Alternatif VectorDB ve Embeding Modelleri): 
+```
   pip install faiss-cpu
   pip install annoy
   pip install weaviate-client
   pip install pinecone-client
   pip install sentence-transformers
+```
+## File Server (Dosya Sunucusu)
+Allows you to send a file path, category, and unique ID via HTTP, process the file into a vector, and store it in the vector database.
 
-# File Sunucusu
-HTTP Üzerinden dosya yolu, kategori ve uniq id göndererek gönderdiğiniz dosyayı tarayıp vector haline getirerek vectorDB içerisinde saklamanıza olanak sağlar.
+(HTTP Üzerinden dosya yolu, kategori ve uniq id göndererek gönderdiğiniz dosyayı tarayıp vector haline getirerek vectorDB içerisinde saklamanıza olanak sağlar.)
 
-# API Sunucusu
-Client üzerinden soru sormanıza ve cevap almanıza olanak sağlar.
+## API Server (API Sunucusu):
+Enables querying and receiving responses from the client.
 
-# Mevcut Embedding Modelleri:
-Kullanmak istediğinzi embedding modelinin yorum satırını kaldırıp o modeli kullanmaya başlayabilirsiniz.
+(Client üzerinden soru sormanıza ve cevap almanıza olanak sağlar.)
 
-# Model						        Hız			  Doğruluk	  Uygulama Alanı
-all-MiniLM-L6-v2			    En hızlı	Orta		    Hızlı ve düşük kaynak gerektiren uygulamalar
-multi-qa-MiniLM-L6-cos-v1	Orta		  Yüksek		  Soru-cevap ve metin eşleştirme uygulamaları
-BAAI/bge-large-en-v1.5		Orta		  Yüksek		  Derinlemesine dil modelleme, büyük veri kümeleri
-intfloat/e5-large-v2		  Orta		  Yüksek		  Genel amaçlı metin analizi ve sınıflandırma
-BAAI/bge-m3					      Yavaş		  Çok Yüksek	Büyük veri analitiği, derin öğrenme tabanlı projeler
+## Available Embedding Models (Mevcut Embedding Modelleri):
+You can uncomment the desired embedding model to start using it.
 
-# Mevcut VectorDB'ler
-Kullanmak istediğinzi db modelinin yorum satırını kaldırıp o modeli kullanmaya başlayabilirsiniz.
+(Kullanmak istediğinzi embedding modelinin yorum satırını kaldırıp o modeli kullanmaya başlayabilirsiniz.)
+```						     
+all-MiniLM-L6-v2			    
+multi-qa-MiniLM-L6-cos-v1 
+BAAI/bge-large-en-v1.5		 
+intfloat/e5-large-v2		  
+BAAI/bge-m3					       
+```
+## Available VectorDBs (Mevcut VectorDB'ler):
+You can uncomment the desired database model to start using it.
 
-Veritabanı	  Hız	      Doğruluk	GPU Desteği	  Kullanım Alanı
-ChromaDB	    En hızlı	Orta	    Hayır	        Küçük/orta ölçekli projeler, hızlı entegrasyon
-FAISS	        Orta	    Yüksek	  Evet	        Büyük veri kümeleri ile hızlı arama ve benzerlik hesaplama
-Annoy	        En hızlı	Orta	    Hayır	        Hafif ve bellek dostu uygulamalar, hızlı arama
-Weaviate	    Orta	    Yüksek	  Evet	        Semantik arama, büyük veri kümeleri
-Pinecone	    Orta	    Yüksek	  Evet	        Yönetilen, bulut tabanlı uygulamalar, büyük veri projeleri
-
-# Çalıştırma
+(Kullanmak istediğinzi db modelinin yorum satırını kaldırıp o modeli kullanmaya başlayabilirsiniz.)
+```	  
+ChromaDB	    
+FAISS	         
+Annoy	        
+Weaviate	     
+Pinecone	    
+```
+## Execution (Çalıştırma)
+```
 uvicorn PythonAPIServer:app --host 127.0.0.1 --port 8001
+```
+```
 uvicorn PythonRAGServer:app --host 127.0.0.1 --port 8000
+```
 
-
-# C# Client Örnek Kodlar
-API Soru Cevap Örneği:
-
+## C# Client Example Codes (C# Client Örnek Kodlar)
+### API Query Example (API Soru Cevap Örneği):
+```
 static async Task<string> Query(string question)
 {
     var jsonData = $"{{\"query\": \"{question}\"}}";
@@ -61,3 +76,31 @@ static async Task<string> Query(string question)
 
     return result;
 }
+```
+
+### C# File Upload Example (C# Dosya Ekleme Örnek Kod):
+```
+static async Task AddFile(string filePath, string category, string fileId)
+    {
+        var jsonData = $"{{\"file_path\": \"{filePath}\", \"category\": \"{category}\", \"file_id\": \"{fileId}\"}}";
+        var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+        HttpResponseMessage response = await client.PostAsync("http://127.0.0.1:8000/add_file/", content);
+        string result = await response.Content.ReadAsStringAsync();
+
+        Console.WriteLine($"Dosya Ekleme Sonucu: {result}");
+    }
+```
+### C# File Delete Example (C# Dosya Silme Örnek Kod):
+```
+    static async Task DeleteFile(string fileId)
+    {
+        var jsonData = $"{{\"file_id\": \"{fileId}\"}}";
+        var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+        HttpResponseMessage response = await client.PostAsync("http://127.0.0.1:8000/delete_file/", content);
+        string result = await response.Content.ReadAsStringAsync();
+
+        Console.WriteLine($"Dosya Silme Sonucu: {result}");
+    }
+```
