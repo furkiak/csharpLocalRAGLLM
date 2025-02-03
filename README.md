@@ -81,26 +81,31 @@ static async Task<string> Query(string question)
 ### C# File Upload Example (C# Dosya Ekleme Örnek Kod):
 ```
 static async Task AddFile(string filePath, string category, string fileId)
+{
+    var data = new
     {
-        var jsonData = $"{{\"file_path\": \"{filePath}\", \"category\": \"{category}\", \"file_id\": \"{fileId}\"}}";
-        var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+        file_path = filePath.Replace("\\", "/"), 
+        category = category,
+        unique_id = fileId
+    };
 
-        HttpResponseMessage response = await client.PostAsync("http://127.0.0.1:8000/add_file/", content);
-        string result = await response.Content.ReadAsStringAsync();
+    var jsonData = JsonSerializer.Serialize(data);
+    var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
 
-        Console.WriteLine($"Dosya Ekleme Sonucu: {result}");
-    }
+    HttpClient client = new HttpClient();
+    HttpResponseMessage response = await client.PostAsync("http://127.0.0.1:8000/add_file/", content);
+    string result = await response.Content.ReadAsStringAsync();
+
+    Console.WriteLine($"Dosya Ekleme Sonucu: {result}");
+}
 ```
 ### C# File Delete Example (C# Dosya Silme Örnek Kod):
 ```
-    static async Task DeleteFile(string fileId)
-    {
-        var jsonData = $"{{\"file_id\": \"{fileId}\"}}";
-        var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+   static async Task DeleteFile(string fileId)
+{
+    HttpResponseMessage response = await client.DeleteAsync($"http://127.0.0.1:8000/delete_file/{fileId}");
+    string result = await response.Content.ReadAsStringAsync();
 
-        HttpResponseMessage response = await client.PostAsync("http://127.0.0.1:8000/delete_file/", content);
-        string result = await response.Content.ReadAsStringAsync();
-
-        Console.WriteLine($"Dosya Silme Sonucu: {result}");
-    }
+    Console.WriteLine($"Dosya Silme Sonucu: {result}");
+}
 ```
