@@ -1,0 +1,3 @@
+# Security
+
+This is an unauthenticated localhost teaching service, not a multi-user document system. Keep Uvicorn bound to `127.0.0.1`; do not expose it through a public proxy without authentication, access control and a document retention plan. `RAG_DOCUMENT_ROOT` limits readable files, but indexed text is available to any local process that can query this API. Prompt injection and malicious PDF handling are not production-reviewed. Report security concerns privately to the repository owner through GitHub's security advisory feature where available; avoid uploading sensitive sample documents to public issues.

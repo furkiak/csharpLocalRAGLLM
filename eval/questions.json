@@ -1,0 +1,22 @@
+[
+  {"question":"What is the return period?","source_id":"handbook","contains":"30 days"},
+  {"question":"When is the support window?","source_id":"handbook","contains":"Tuesday and Thursday"},
+  {"question":"What is the backup schedule?","source_id":"handbook","contains":"02:00 UTC"},
+  {"question":"What is the retention period?","source_id":"handbook","contains":"seven days"},
+  {"question":"What is the export format?","source_id":"handbook","contains":"UTF-8 CSV"},
+  {"question":"What is the invoice currency?","source_id":"handbook","contains":"EUR"},
+  {"question":"What is the trial duration?","source_id":"handbook","contains":"14 days"},
+  {"question":"Who is the project owner?","source_id":"handbook","contains":"Documentation Team"},
+  {"question":"What is the release channel?","source_id":"handbook","contains":"preview channel"},
+  {"question":"What is the issue response time?","source_id":"handbook","contains":"three business days"},
+  {"question":"Türkçe iade süresi kaç gündür?","source_id":"handbook","contains":"30 gün"},
+  {"question":"Türkçe destek günü nedir?","source_id":"handbook","contains":"salı ve perşembe"},
+  {"question":"What is the shipping fee?","source_id":null},
+  {"question":"Which bank processes refunds?","source_id":null},
+  {"question":"What is the password length?","source_id":null},
+  {"question":"Where is the office address?","source_id":null},
+  {"question":"What is the phone number?","source_id":null},
+  {"question":"Kargo ücreti kaç liradır?","source_id":null},
+  {"question":"Hangi şehirde ofis var?","source_id":null},
+  {"question":"What is the cafeteria menu?","source_id":null}
+]

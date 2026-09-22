@@ -1,0 +1,8 @@
+.venv/
+.rag-data/
+chroma_db/
+__pycache__/
+.pytest_cache/
+bin/
+obj/
+*.pyc

@@ -1,55 +1,66 @@
-using System;
-using System.Net.Http;
-using System.Text;
+using System.Net.Http.Json;
 using System.Text.Json;
-using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
-
-class Program
+var baseUrl = Environment.GetEnvironmentVariable("RAG_API_URL") ?? "http://127.0.0.1:8000";
+if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var endpoint) ||
+    endpoint.Scheme != Uri.UriSchemeHttp || !endpoint.IsLoopback)
 {
-    static readonly HttpClient client = new HttpClient();
+    Console.Error.WriteLine("RAG_API_URL must be a loopback HTTP address.");
+    return 2;
+}
 
-    static async Task Main()
+if (args.Length == 0)
+{
+    Console.Error.WriteLine("Usage: add <path> <category> <id> | ask <question> | delete <id>");
+    return 2;
+}
+
+using var client = new HttpClient { BaseAddress = endpoint, Timeout = TimeSpan.FromSeconds(30) };
+try
+{
+    HttpResponseMessage response;
+    switch (args[0].ToLowerInvariant())
     {
-        await AddFile("./CV.PDF","HR","123");
-        await Query("XXXX'in Telefon Numarası Ne?");
-        //await DeleteFile("123");
+        case "add" when args.Length == 4:
+            response = await client.PostAsJsonAsync("/documents", new DocumentRequest(
+                Path.GetFullPath(args[1]), args[2], args[3]));
+            break;
+        case "ask" when args.Length >= 2:
+            response = await client.PostAsJsonAsync("/query", new QueryRequest(
+                string.Join(' ', args.Skip(1))));
+            break;
+        case "delete" when args.Length == 2:
+            response = await client.DeleteAsync("/documents/" + Uri.EscapeDataString(args[1]));
+            break;
+        default:
+            Console.Error.WriteLine("Usage: add <path> <category> <id> | ask <question> | delete <id>");
+            return 2;
     }
 
-    static async Task<string> Query(string question)
+    using (response)
     {
-        var jsonData = $"{{\"query\": \"{question}\"}}";
-        var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
-
-        HttpResponseMessage response = await client.PostAsync("http://127.0.0.1:8001/query/", content);
-        string result = await response.Content.ReadAsStringAsync();
-
-        return result;
-    }
-
-    static async Task AddFile(string filePath, string category, string fileId)
-    {
-        var data = new
+        var body = await response.Content.ReadAsStringAsync();
+        if (!response.IsSuccessStatusCode)
         {
-            file_path = filePath.Replace("\\", "/"), // JSON uyumlu hale getir
-            category = category,
-            unique_id = fileId
-        };
-
-        var jsonData = JsonSerializer.Serialize(data);
-        var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
-
-        HttpClient client = new HttpClient();
-        HttpResponseMessage response = await client.PostAsync("http://127.0.0.1:8000/add_file/", content);
-        string result = await response.Content.ReadAsStringAsync();
-
-        Console.WriteLine($"Dosya Ekleme Sonucu: {result}");
-    }
-    static async Task DeleteFile(string fileId)
-    {
-        HttpResponseMessage response = await client.DeleteAsync($"http://127.0.0.1:8000/delete_file/{fileId}");
-        string result = await response.Content.ReadAsStringAsync();
-
-        Console.WriteLine($"Dosya Silme Sonucu: {result}");
+            Console.Error.WriteLine($"RAG API returned {(int)response.StatusCode}: {body}");
+            return 1;
+        }
+        using var json = JsonDocument.Parse(body);
+        Console.WriteLine(JsonSerializer.Serialize(json.RootElement,
+            new JsonSerializerOptions { WriteIndented = true }));
+        return 0;
     }
 }
+catch (Exception error) when (error is HttpRequestException or TaskCanceledException or JsonException)
+{
+    Console.Error.WriteLine("RAG request failed: " + error.Message);
+    return 1;
+}
+
+internal sealed record DocumentRequest(
+    [property: JsonPropertyName("file_path")] string FilePath,
+    [property: JsonPropertyName("category")] string Category,
+    [property: JsonPropertyName("unique_id")] string UniqueId);
+
+internal sealed record QueryRequest([property: JsonPropertyName("query")] string Query);
