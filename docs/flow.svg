@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 360" role="img" aria-labelledby="title desc">
   <title id="title">Local retrieval flow and optional loopback generation</title>
-  <desc id="desc">C# client sends a file path or question to the loopback Python API. Local text and PDF files are stored with lexical vectors and source metadata in Chroma. Default query returns an exact source excerpt or no-answer. Optional generation sends retrieved evidence to an explicit loopback model server, validates citation IDs and returns model output or an error. Real-model validation remains separate.</desc>
+  <desc id="desc">C# client sends a file path or question to the loopback Python API. Local text and PDF files are stored with lexical vectors and source metadata in SQLite. Default query returns an exact source excerpt or no-answer. Optional generation sends retrieved evidence to an explicit loopback model server, validates citation IDs and returns model output or an error. Real-model validation remains separate.</desc>
   <defs>
     <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#0e1a2d"/><stop offset="1" stop-color="#163847"/></linearGradient>
     <linearGradient id="card" x2="1" y2="1"><stop stop-color="#263b58"/><stop offset="1" stop-color="#1b3049"/></linearGradient>
@@ -20,7 +20,7 @@
     <text x="296" y="213" fill="#c4d6e8" font-size="14">TXT · MD · PDF text</text>
     <path d="M464 189h48" stroke="#a9d7ff" stroke-width="3" marker-end="url(#arrow)"/>
     <rect x="522" y="125" width="180" height="128" rx="20" fill="url(#card)" stroke="#7c9bc0"/>
-    <text x="540" y="161" fill="#f2f8ff" font-size="18" font-weight="700">Chroma</text>
+    <text x="540" y="161" fill="#f2f8ff" font-size="18" font-weight="700">SQLite</text>
     <text x="540" y="190" fill="#c4d6e8" font-size="14">chunks + source</text>
     <text x="540" y="213" fill="#c4d6e8" font-size="14">lexical hash vector</text>
     <path d="M708 189h48" stroke="#a9d7ff" stroke-width="3" marker-end="url(#arrow)"/>

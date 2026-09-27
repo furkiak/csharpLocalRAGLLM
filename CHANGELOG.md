@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-preview.3 — isolated SQLite dependency correction, not published
+
+- Replace the Chroma backend with Python standard-library SQLite for the small lexical demonstration. Earlier Chroma files are preserved and not auto-migrated; re-ingest source files into `rag-v2.sqlite3`. Replacement/removal of stale chunks is atomic, query categories are parameterized, and concurrent writes use separate connections.
+- Bound the exact O(n) vector scan to 10,000 total chunks. This is a deliberate small-corpus limit, not an approximate vector-search or throughput claim.
+- Upgrade FastAPI/Starlette, pypdf and pytest after a dated complete dependency audit found advisories in the old graph. Remove the unused Chroma/NumPy/PostHog graph; published Chroma versions had no fix for two advisories at review time. Keep actual runtime and dependency audit evidence separate.
+- Retain all 42 ingest/protocol/CLI cases and add nine real SQLite regression cases for restart, failed-replacement rollback, parameterized categories/stale removal, index capacity, concurrent writers and preservation/rejection of incompatible existing databases. The earlier genuine-model result belongs to preview.2; each later exact package is tested and recorded separately.
+
 ## 0.3.0-preview.2 — local structured-output correction, not published
 
 - Actual Qwen2.5-1.5B Q4_K_M / llama.cpp b11208 requests exposed missing citation fields despite plain JSON output. Request a llama.cpp-supported response schema with required answer/citations, no extra fields and only supplied source IDs. Keep local response, alias, finish, size, deadline and citation validation authoritative when a server ignores the schema.
@@ -20,4 +27,4 @@
 - Added document-root and size limits, HTTP error responses, an offline 20-question evaluation with a mutation check, a synthetic sample and CI build/tests.
 - Removed the untestable startup dependency on absent local model weights. This preview is extractive; no generative LLM quality claim is made.
 
-The previous code used separate ports 8000 and 8001 and stored embeddings without document text. This preview uses port 8000 only and a new `documents_v1` Chroma collection. Old data is not migrated; retain a backup if it matters and re-ingest from source files. To revert, switch to the earlier Git commit and restore its own Python environment; the older service still requires absent weights for the query path.
+Historical 0.2.0 note: the previous code used separate ports 8000 and 8001 and stored embeddings without document text. This preview uses port 8000 only and a new `documents_v1` Chroma collection. Old data is not migrated; retain a backup if it matters and re-ingest from source files. To revert, switch to the earlier Git commit and restore its own Python environment; the older service still requires absent weights for the query path.

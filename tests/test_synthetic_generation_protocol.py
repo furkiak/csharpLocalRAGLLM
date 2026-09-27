@@ -2,12 +2,9 @@
 import json
 import threading
 import time
-import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-import chromadb
 import pytest
-from chromadb.config import Settings as ChromaSettings
 from fastapi.testclient import TestClient
 
 import app as api
@@ -97,9 +94,7 @@ def rag(tmp_path, server=None, endpoint=None, timeout=30, text="The return perio
     docs.mkdir(exist_ok=True)
     (docs / "policy.md").write_text(text, encoding="utf-8")
     settings = GenerationSettings(endpoint or server.endpoint, "synthetic-protocol-fixture", timeout, "synthetic_fixture") if server or endpoint else None
-    service = RagService(RagSettings(docs, tmp_path / "db", settings),
-                         client=chromadb.EphemeralClient(settings=ChromaSettings(anonymized_telemetry=False)),
-                         collection_name="synthetic_" + uuid.uuid4().hex[:12])
+    service = RagService(RagSettings(docs, tmp_path / "db", settings))
     service.ingest("policy.md", "policy", "policy")
     return service
 

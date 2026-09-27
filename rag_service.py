@@ -2,16 +2,16 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
 
-import chromadb
-from chromadb.config import Settings as ChromaSettings
 from pypdf import PdfReader
 from generation_adapter import GenerationError, GenerationSettings, LoopbackChatGenerator, bounded_context
+from sqlite_store import IndexLimitError, SqliteStore
 
 VECTOR_SIZE = 384
 MAX_FILE_BYTES = 2 * 1024 * 1024
@@ -64,14 +64,11 @@ class RagSettings:
 
 
 class RagService:
-    def __init__(self, settings: RagSettings, client=None, collection_name: str = "documents_v1"):
+    def __init__(self, settings: RagSettings):
         self.settings = RagSettings(settings.document_root.resolve(), settings.db_path.resolve(), settings.generation)
         self.settings.document_root.mkdir(parents=True, exist_ok=True)
         self.settings.db_path.mkdir(parents=True, exist_ok=True)
-        self.client = client or chromadb.PersistentClient(
-            path=str(self.settings.db_path), settings=ChromaSettings(anonymized_telemetry=False))
-        self.collection = self.client.get_or_create_collection(
-            name=collection_name, metadata={"hnsw:space": "cosine"})
+        self.store = SqliteStore(self.settings.db_path)
 
     def allowed_file(self, file_path: str) -> Path:
         root = self.settings.document_root.resolve()
@@ -115,40 +112,29 @@ class RagService:
         if len(sections) > 200:
             raise DocumentError("Document exceeds the 200-chunk limit.", 413)
         source_path = path.relative_to(self.settings.document_root).as_posix()
-        ids = [f"{unique_id}:{index:04d}" for index in range(len(sections))]
-        existing = set(self.collection.get(where={"source_id": unique_id})["ids"])
-        self.collection.upsert(
-            ids=ids,
-            documents=[chunk for chunk, _ in sections],
-            embeddings=[embedding(chunk) for chunk, _ in sections],
-            metadatas=[{"source_id": unique_id, "source_path": source_path,
-                        "category": category, "page": page, "chunk": index}
-                       for index, (_, page) in enumerate(sections)])
-        stale = existing - set(ids)
-        if stale:
-            self.collection.delete(ids=list(stale))
-        return {"source_id": unique_id, "source_path": source_path, "chunks": len(ids)}
+        rows = [(unique_id, index, source_path, category, page, chunk,
+                 json.dumps(embedding(chunk), separators=(",", ":"), allow_nan=False))
+                for index, (chunk, page) in enumerate(sections)]
+        try:
+            self.store.replace_document(unique_id, rows)
+        except IndexLimitError as error:
+            raise DocumentError(str(error), 413) from error
+        return {"source_id": unique_id, "source_path": source_path, "chunks": len(rows)}
 
     def delete(self, unique_id: str) -> dict:
-        existing = self.collection.get(where={"source_id": unique_id})["ids"]
-        if existing:
-            self.collection.delete(ids=existing)
-        return {"source_id": unique_id, "deleted_chunks": len(existing)}
+        return {"source_id": unique_id, "deleted_chunks": self.store.delete_document(unique_id)}
 
     def retrieve(self, question: str, category: str | None = None) -> list[dict]:
         question_words = set(words(question))
-        if not question_words or not self.collection.count():
+        if not question_words:
             return []
-        kwargs = {"where": {"category": category}} if category else {}
-        result = self.collection.query(
-            query_embeddings=[embedding(question)], n_results=min(12, self.collection.count()),
-            include=["documents", "metadatas", "distances"], **kwargs)
         candidates = []
-        for document, meta, distance in zip(
-            result["documents"][0], result["metadatas"][0], result["distances"][0]):
+        for similarity, row in self.store.nearest(embedding(question), category):
+            source_id, chunk, path, _, page, document, _ = row
             overlap = len(question_words & set(words(document))) / len(question_words)
             if overlap >= 0.5:
-                candidates.append((overlap, 1.0 - distance, document, meta))
+                meta = {"source_id": source_id, "source_path": path, "page": page, "chunk": chunk}
+                candidates.append((overlap, similarity, document, meta))
         candidates.sort(key=lambda item: (item[0], item[1]), reverse=True)
         return [{"text": document, "source": {
             "source_id": meta["source_id"], "source_path": meta["source_path"],

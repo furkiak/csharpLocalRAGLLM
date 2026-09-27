@@ -1,10 +1,7 @@
 import json
 import shutil
-import uuid
 from pathlib import Path
 
-import chromadb
-from chromadb.config import Settings as ChromaSettings
 from fastapi.testclient import TestClient
 from reportlab.pdfgen import canvas
 
@@ -69,10 +66,7 @@ def test_20_question_report_detects_changed_source(tmp_path):
     docs = tmp_path / "docs"
     docs.mkdir()
     shutil.copyfile(root / "samples" / "handbook.md", docs / "handbook.md")
-    rag = RagService(RagSettings(docs, tmp_path / "ephemeral"),
-                     client=chromadb.EphemeralClient(
-                         settings=ChromaSettings(anonymized_telemetry=False)),
-                     collection_name="eval_" + uuid.uuid4().hex[:12])
+    rag = RagService(RagSettings(docs, tmp_path / "ephemeral"))
     rag.ingest("handbook.md", "example", "handbook")
     original = evaluate(rag, cases)
     assert len(original) == 20

@@ -1,7 +1,5 @@
-fastapi==0.115.8
+fastapi==0.141.1
+starlette==1.7.0
 uvicorn==0.34.0
-chromadb==0.4.24
-pypdf==5.1.0
-numpy==1.26.4
+pypdf==6.19.0
 pydantic==2.10.6
-posthog==3.5.0
