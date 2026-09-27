@@ -22,7 +22,7 @@ class SqliteStore:
             if version not in (0, 2):
                 raise ValueError("Unsupported index version; preserve it and use a new RAG_DB_PATH.")
             tables = {row[0] for row in connection.execute(
-                "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")}
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT GLOB 'sqlite_*'")}
             if version == 0 and tables:
                 raise ValueError("Existing unversioned database is not this index; preserve it and use a new RAG_DB_PATH.")
             if version == 2:

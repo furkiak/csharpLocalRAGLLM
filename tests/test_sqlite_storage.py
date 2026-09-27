@@ -117,3 +117,17 @@ def test_reordered_version_two_schema_is_preserved_and_rejected(tmp_path):
     with pytest.raises(ValueError, match="Unsupported index schema"):
         RagService(RagSettings(docs, data))
     assert hashlib.sha256(database.read_bytes()).hexdigest() == before
+
+
+def test_sqlite_like_foreign_table_name_cannot_hide_unversioned_database(tmp_path):
+    docs, data = tmp_path / "docs", tmp_path / "db"
+    docs.mkdir()
+    data.mkdir()
+    database = data / "rag-v2.sqlite3"
+    with sqlite3.connect(database) as connection:
+        connection.execute("CREATE TABLE sqlitex_backup (value TEXT)")
+        connection.execute("INSERT INTO sqlitex_backup VALUES ('synthetic data to preserve')")
+    before = hashlib.sha256(database.read_bytes()).hexdigest()
+    with pytest.raises(ValueError, match="Existing unversioned database"):
+        RagService(RagSettings(docs, data))
+    assert hashlib.sha256(database.read_bytes()).hexdigest() == before
