@@ -191,7 +191,9 @@ class LoopbackChatGenerator:
         timer.start()
         try:
             connection.connect()
-            wire = connection.sock
+            # HTTPConnection may close its socket object for Connection: close.
+            # Keep an owned duplicate for the total-deadline shutdown until body EOF.
+            wire = connection.sock.dup()
 
             def remaining():
                 seconds = deadline - time.monotonic()
@@ -241,3 +243,5 @@ class LoopbackChatGenerator:
             if response is not None:
                 response.close()
             connection.close()
+            if wire is not None:
+                wire.close()
