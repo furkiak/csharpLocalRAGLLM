@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from rag_service import DocumentError, RagService, RagSettings
 
-app = FastAPI(title="C# Local RAG", version="0.3.0-preview.1")
+app = FastAPI(title="C# Local RAG", version="0.3.0-preview.2")
 
 
 class DocumentRequest(BaseModel):

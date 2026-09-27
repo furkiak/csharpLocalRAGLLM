@@ -4,7 +4,7 @@
 
 ![Architecture of default extractive retrieval and optional loopback generation](docs/flow.svg)
 
-> **0.3.0-preview.1 · local source preview.** The earlier `LLMModel/` directory contains tokenizer/config files but **no model weights**. Default `/query` stays extractive. Generative protocol tests use explicitly labelled synthetic HTTP servers; they are not real-model quality or runtime evidence. [Local model setup and result boundaries](docs/LOCAL_MODEL.md) describe the separate real-model gate. Nothing is downloaded or started automatically.
+> **0.3.0-preview.2 · local source preview.** The earlier `LLMModel/` directory contains tokenizer/config files but **no model weights**. Default `/query` stays extractive. Actual Qwen2.5-1.5B / llama.cpp validation exposed missing citations; schema-constrained output fixes that format path. A dated working-source run matched 19/20 tailored examples, but generic and conflicting-source answers still failed review. Valid citation IDs do not prove that an answer is supported. Synthetic protocol tests and genuine model results are separate. See [local setup and observed limitations](docs/LOCAL_MODEL.md). Nothing is downloaded or started automatically.
 
 ## Quick start
 

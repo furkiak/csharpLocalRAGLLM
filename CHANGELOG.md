@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-preview.2 — local structured-output correction, not published
+
+- Actual Qwen2.5-1.5B Q4_K_M / llama.cpp b11208 requests exposed missing citation fields despite plain JSON output. Request a llama.cpp-supported response schema with required answer/citations, no extra fields and only supplied source IDs. Keep local response, alias, finish, size, deadline and citation validation authoritative when a server ignores the schema.
+- Clarify fact, language and conflict instructions. This improves format consistency; it does not prove factual grounding. A dated working-source evaluation scored 19/20 on small tailored literal/source checks with zero generation errors; a generic return-period answer and an unsupported conflict answer remained quality failures. Real responses are recorded separately from synthetic protocol tests.
+- Default extraction still makes no model call. No model/runtime, credentials or index is bundled; the user starts the model independently. Real corpus, paraphrase quality, physical cancellation, fresh machine, remote CI and public release remain open.
+- Scope pytest collection to the source `tests` directory so retained clean-checkout and package copies under ignored `TestResults` do not collide with source modules. No source tests are suppressed.
+
 ## 0.3.0-preview.1 — local source/protocol preview, not published
 
 - Preserve extractive defaults and separate retrieval into a reusable method. Add explicit generative mode for a manually configured literal-loopback llama.cpp-compatible HTTP server; no model/runtime download/start, cloud recipient or API key.

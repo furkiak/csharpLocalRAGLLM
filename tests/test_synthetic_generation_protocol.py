@@ -124,7 +124,12 @@ def test_synthetic_actual_http_generation_has_explicit_mode_citations_and_no_cre
     assert payload["stream"] is False
     assert payload["temperature"] == 0
     assert payload["max_tokens"] == MAX_TOKENS
-    assert payload["response_format"] == {"type": "json_object"}
+    schema = payload["response_format"]["schema"]
+    assert payload["response_format"]["type"] == "json_object"
+    assert schema["additionalProperties"] is False
+    assert set(schema["required"]) == {"answer", "citations"}
+    assert schema["properties"]["answer"]["type"] == ["string", "null"]
+    assert schema["properties"]["citations"]["items"]["enum"] == ["S1"]
     assert [message["role"] for message in payload["messages"]] == ["system", "user"]
     assert "untrusted evidence" in payload["messages"][0]["content"]
     assert "tools" not in payload
