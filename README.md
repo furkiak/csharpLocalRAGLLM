@@ -4,7 +4,7 @@
 
 ![Architecture of default extractive retrieval and optional loopback generation](docs/flow.svg)
 
-> **0.3.0-preview.3 · local source preview.** The earlier `LLMModel/` directory contains tokenizer/config files but **no model weights**. Default `/query` stays extractive. Actual Qwen2.5-1.5B / llama.cpp validation exposed missing citations; schema-constrained output fixes that format path. A dated preview.2 run matched 19/20 tailored examples, but generic and conflicting-source answers still failed review. Valid citation IDs do not prove that an answer is supported. Synthetic protocol tests and genuine model results are separate. See [local setup and observed limitations](docs/LOCAL_MODEL.md). Nothing is downloaded or started automatically.
+> **0.3.0-preview.3 · local source preview.** The earlier `LLMModel/` directory contains tokenizer/config files but **no model weights**. Default `/query` stays extractive. Actual Qwen2.5-1.5B / llama.cpp validation exposed missing citations; schema-constrained output fixes that format path. The exact preview.3 package matched 19/20 small tailored examples, but a generic answer and conflicting-source answer still failed review. Valid citation IDs do not prove that an answer is supported. Synthetic protocol tests and genuine model results are separate. See [local setup and observed limitations](docs/LOCAL_MODEL.md). Nothing is downloaded or started automatically.
 
 ## Quick start
 
