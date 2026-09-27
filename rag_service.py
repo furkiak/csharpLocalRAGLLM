@@ -11,6 +11,7 @@ from pathlib import Path
 import chromadb
 from chromadb.config import Settings as ChromaSettings
 from pypdf import PdfReader
+from generation_adapter import GenerationError, GenerationSettings, LoopbackChatGenerator, bounded_context
 
 VECTOR_SIZE = 384
 MAX_FILE_BYTES = 2 * 1024 * 1024
@@ -52,17 +53,19 @@ def chunk_text(text: str, size: int = 110, overlap: int = 20) -> list[str]:
 class RagSettings:
     document_root: Path
     db_path: Path
+    generation: GenerationSettings | None = None
 
     @classmethod
     def from_environment(cls) -> "RagSettings":
         project = Path(__file__).resolve().parent
         return cls(Path(os.environ.get("RAG_DOCUMENT_ROOT", project / "samples")).resolve(),
-                   Path(os.environ.get("RAG_DB_PATH", project / ".rag-data")).resolve())
+                   Path(os.environ.get("RAG_DB_PATH", project / ".rag-data")).resolve(),
+                   GenerationSettings.from_environment())
 
 
 class RagService:
     def __init__(self, settings: RagSettings, client=None, collection_name: str = "documents_v1"):
-        self.settings = RagSettings(settings.document_root.resolve(), settings.db_path.resolve())
+        self.settings = RagSettings(settings.document_root.resolve(), settings.db_path.resolve(), settings.generation)
         self.settings.document_root.mkdir(parents=True, exist_ok=True)
         self.settings.db_path.mkdir(parents=True, exist_ok=True)
         self.client = client or chromadb.PersistentClient(
@@ -132,10 +135,10 @@ class RagService:
             self.collection.delete(ids=existing)
         return {"source_id": unique_id, "deleted_chunks": len(existing)}
 
-    def query(self, question: str, category: str | None = None) -> dict:
+    def retrieve(self, question: str, category: str | None = None) -> list[dict]:
         question_words = set(words(question))
         if not question_words or not self.collection.count():
-            return {"status": "no_answer", "answer": None, "sources": []}
+            return []
         kwargs = {"where": {"category": category}} if category else {}
         result = self.collection.query(
             query_embeddings=[embedding(question)], n_results=min(12, self.collection.count()),
@@ -146,13 +149,47 @@ class RagService:
             overlap = len(question_words & set(words(document))) / len(question_words)
             if overlap >= 0.5:
                 candidates.append((overlap, 1.0 - distance, document, meta))
-        if not candidates:
-            return {"status": "no_answer", "answer": None, "sources": []}
         candidates.sort(key=lambda item: (item[0], item[1]), reverse=True)
-        _, similarity, document, meta = candidates[0]
-        sentences = [part.strip() for part in re.split(r"(?<=[.!?])\s+|\n+", document) if part.strip()]
-        sentence = max(sentences, key=lambda part: len(question_words & set(words(part))))
-        return {"status": "grounded", "answer": sentence, "sources": [{
+        return [{"text": document, "source": {
             "source_id": meta["source_id"], "source_path": meta["source_path"],
             "page": meta["page"] or None, "chunk": meta["chunk"],
-            "similarity": round(similarity, 4), "excerpt": sentence}]}
+            "similarity": round(similarity, 4)}} for _, similarity, document, meta in candidates]
+
+    def query(self, question: str, category: str | None = None, mode: str = "extractive") -> dict:
+        if mode not in {"extractive", "generative"}:
+            raise ValueError("Mode must be extractive or generative.")
+        candidates = self.retrieve(question, category)
+        if not candidates:
+            return {"status": "no_answer", "mode": mode, "answer": None, "sources": [],
+                    "citations": [], "reason": "retrieval_gate", "generation_attempted": False}
+        if mode == "generative":
+            configured = self.settings.generation
+            kind = configured.server_kind if configured and configured.server_kind in {"unverified", "synthetic_fixture", "local_model"} else "unverified"
+            info = {"adapter": "loopback-chat-completions", "server_kind": kind,
+                    "kind_is_operator_declared": True, "requested_model": None,
+                    "citation_validation": "provided_ids_only; factual correctness is not verified"}
+            attempted = False
+            try:
+                if configured is None:
+                    raise GenerationError("not_configured", "Configure an explicit loopback generation endpoint and model before using generative mode.")
+                configured.validated()
+                info["requested_model"] = configured.model
+                context = bounded_context(candidates)
+                attempted = True
+                result = LoopbackChatGenerator(configured).generate(question, context)
+                info["reported_model"] = result.pop("reported_model")
+                info["request_response_model_match"] = True
+                return {"status": "generated" if result["answer"] is not None else "no_answer", "mode": mode,
+                        **result, "reason": "model_output" if result["answer"] is not None else "model_abstained",
+                        "generation_attempted": True, "generation": info}
+            except GenerationError as error:
+                return {"status": "generation_error", "mode": mode, "answer": None, "sources": [], "citations": [],
+                        "generation_attempted": attempted, "generation": info,
+                        "error": {"code": error.code, "message": str(error)}}
+        question_words = set(words(question))
+        first = candidates[0]
+        document, source = first["text"], first["source"]
+        sentences = [part.strip() for part in re.split(r"(?<=[.!?])\s+|\n+", document) if part.strip()]
+        sentence = max(sentences, key=lambda part: len(question_words & set(words(part))))
+        return {"status": "grounded", "mode": mode, "answer": sentence,
+                "sources": [{**source, "excerpt": sentence}], "generation_attempted": False}

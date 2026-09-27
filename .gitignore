@@ -3,6 +3,7 @@
 chroma_db/
 __pycache__/
 .pytest_cache/
-bin/
-obj/
+**/bin/
+**/obj/
+TestResults/
 *.pyc

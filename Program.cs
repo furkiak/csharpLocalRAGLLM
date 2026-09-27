@@ -1,66 +1,42 @@
-using System.Net.Http.Json;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
-var baseUrl = Environment.GetEnvironmentVariable("RAG_API_URL") ?? "http://127.0.0.1:8000";
-if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var endpoint) ||
-    endpoint.Scheme != Uri.UriSchemeHttp || !endpoint.IsLoopback)
-{
-    Console.Error.WriteLine("RAG_API_URL must be a loopback HTTP address.");
-    return 2;
-}
-
-if (args.Length == 0)
-{
-    Console.Error.WriteLine("Usage: add <path> <category> <id> | ask <question> | delete <id>");
-    return 2;
-}
-
-using var client = new HttpClient { BaseAddress = endpoint, Timeout = TimeSpan.FromSeconds(30) };
+using var userCancellation = new CancellationTokenSource();
+Console.CancelKeyPress += (_, cancel) => { cancel.Cancel = true; userCancellation.Cancel(); };
 try
 {
-    HttpResponseMessage response;
-    switch (args[0].ToLowerInvariant())
+    var options = CliOptions.Parse(args);
+    using var deadline = CancellationTokenSource.CreateLinkedTokenSource(userCancellation.Token);
+    deadline.CancelAfter(TimeSpan.FromSeconds(options.TimeoutSeconds));
+    using var client = new RagApiClient(Environment.GetEnvironmentVariable("RAG_API_URL") ?? "http://127.0.0.1:8000");
+    if (options.Command == "ask")
+        Console.Error.WriteLine(options.Mode == "generative"
+            ? "Mode: generative, opt-in local HTTP. Model output is not fact-checked; inspect citations. Ctrl+C stops this client's wait."
+            : "Mode: extractive, source excerpt; no model invocation. Ctrl+C cancels this client's request.");
+    using var json = await client.ExecuteAsync(options, deadline.Token);
+    if (json.RootElement.TryGetProperty("generation", out var generation)
+        && generation.TryGetProperty("server_kind", out var kind))
     {
-        case "add" when args.Length == 4:
-            response = await client.PostAsJsonAsync("/documents", new DocumentRequest(
-                Path.GetFullPath(args[1]), args[2], args[3]));
-            break;
-        case "ask" when args.Length >= 2:
-            response = await client.PostAsJsonAsync("/query", new QueryRequest(
-                string.Join(' ', args.Skip(1))));
-            break;
-        case "delete" when args.Length == 2:
-            response = await client.DeleteAsync("/documents/" + Uri.EscapeDataString(args[1]));
-            break;
-        default:
-            Console.Error.WriteLine("Usage: add <path> <category> <id> | ask <question> | delete <id>");
-            return 2;
-    }
-
-    using (response)
-    {
-        var body = await response.Content.ReadAsStringAsync();
-        if (!response.IsSuccessStatusCode)
+        string label = kind.GetString() switch
         {
-            Console.Error.WriteLine($"RAG API returned {(int)response.StatusCode}: {body}");
-            return 1;
-        }
-        using var json = JsonDocument.Parse(body);
-        Console.WriteLine(JsonSerializer.Serialize(json.RootElement,
-            new JsonSerializerOptions { WriteIndented = true }));
-        return 0;
+            "synthetic_fixture" => "SYNTHETIC HTTP FIXTURE: no model inference.",
+            "local_model" => "Operator-declared local model; server/model identity is not independently verified by this client.",
+            _ => "UNVERIFIED local HTTP server; no real-model validation is claimed."
+        };
+        Console.Error.WriteLine(label);
     }
+    Console.WriteLine(JsonSerializer.Serialize(json.RootElement, new JsonSerializerOptions { WriteIndented = true }));
+    return json.RootElement.TryGetProperty("status", out var status) && status.GetString() == "generation_error" ? 1 : 0;
 }
-catch (Exception error) when (error is HttpRequestException or TaskCanceledException or JsonException)
+catch (OperationCanceledException)
 {
-    Console.Error.WriteLine("RAG request failed: " + error.Message);
+    Console.Error.WriteLine(userCancellation.IsCancellationRequested
+        ? "Client request cancelled. The API/model server may continue until its own bounded deadline."
+        : "Client request timed out. The API/model server may continue until its own bounded deadline.");
+    return userCancellation.IsCancellationRequested ? 130 : 1;
+}
+catch (ArgumentException error) { Console.Error.WriteLine(error.Message); return 2; }
+catch (Exception error) when (error is HttpRequestException or JsonException or IOException)
+{
+    Console.Error.WriteLine("RAG request failed; check the local API and response format. No partial answer is returned.");
     return 1;
 }
-
-internal sealed record DocumentRequest(
-    [property: JsonPropertyName("file_path")] string FilePath,
-    [property: JsonPropertyName("category")] string Category,
-    [property: JsonPropertyName("unique_id")] string UniqueId);
-
-internal sealed record QueryRequest([property: JsonPropertyName("query")] string Query);

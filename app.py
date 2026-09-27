@@ -1,5 +1,6 @@
 """Local-only HTTP API for the grounded retrieval sample."""
 import re
+from typing import Literal
 from functools import lru_cache
 
 from fastapi import FastAPI, HTTPException
@@ -7,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from rag_service import DocumentError, RagService, RagSettings
 
-app = FastAPI(title="C# Local RAG", version="0.2.0-preview.1")
+app = FastAPI(title="C# Local RAG", version="0.3.0-preview.1")
 
 
 class DocumentRequest(BaseModel):
@@ -19,6 +20,7 @@ class DocumentRequest(BaseModel):
 class QueryRequest(BaseModel):
     query: str = Field(min_length=2, max_length=500)
     category: str | None = Field(default=None, max_length=40)
+    mode: Literal["extractive", "generative"] = "extractive"
 
 
 @lru_cache(maxsize=1)
@@ -50,9 +52,11 @@ def delete_document(unique_id: str):
 
 @app.post("/query")
 def query_document(request: QueryRequest):
-    return service().query(request.query.strip(), request.category)
+    return service().query(request.query.strip(), request.category, request.mode)
 
 
 @app.get("/health")
 def health():
-    return {"status": "ready", "mode": "offline-extractive"}
+    settings = RagSettings.from_environment()
+    return {"status": "ready", "mode": "offline-extractive", "generation_configured": settings.generation is not None,
+            "generation_runtime_verified": False}
