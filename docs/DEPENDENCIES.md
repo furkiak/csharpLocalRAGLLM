@@ -18,11 +18,12 @@ alone would repair these advisories. Earlier indexes and packages are preserved.
 
 The reviewed direct application pins are FastAPI 0.141.1, Starlette 1.7.0,
 Uvicorn 0.34.0, pypdf 6.19.0 and Pydantic 2.10.6. The development pins add
-httpx 0.27.2, pytest 9.1.1 and ReportLab 5.0.0. Official
-[PyPI](https://pypi.org/) resolution for Python 3.10 produced 15 application and
-29 application/development packages. The complete resolved graphs were checked
-with [pip-audit](https://github.com/pypa/pip-audit) using the PyPI advisory service:
-zero reported advisories, zero skipped packages for this snapshot. Installer,
+httpx2 2.13.1, pytest 9.1.1 and ReportLab 5.0.0. Official
+[PyPI](https://pypi.org/) resolution of the HTTPX2 pins produced 26 application/development
+packages using Python 3.12.14, and 28 using Python 3.10.6. Both complete resolved
+graphs were checked with [pip-audit](https://github.com/pypa/pip-audit) using the
+PyPI advisory service: zero reported advisories, zero skipped packages for these
+snapshots. Installer,
 Python/SQLite, .NET and separately chosen model/runtime security are outside
 that application dependency result. Installer bootstrap is reviewed separately:
 `requirements-bootstrap.txt` pins pip 26.2.1 and setuptools 84.0.0, whose separate
@@ -30,6 +31,12 @@ dated two-package audit reported zero advisories and zero skips. Upgrade only th
 new virtual environment before installing the application. The pins are not a
 complete cross-platform lock. CI declares a strict combined dependency audit;
 its remote result still requires observation.
+
+Python 3.12 is the new default. Python 3.10 reaches the end of its scheduled
+support in October 2026 ([official version status](https://devguide.python.org/versions/));
+its earlier local evidence is a compatibility snapshot, not a recommendation to
+keep using an old interpreter. Python/SQLite build security remains separate from
+PyPI package advisories.
 
 Install into a fresh virtual environment; do not reuse the old Chroma environment.
 Run the source tests and extractive evaluation after any dependency change.

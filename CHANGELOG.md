@@ -5,6 +5,7 @@
 - Replace the Chroma backend with Python standard-library SQLite for the small lexical demonstration. Earlier Chroma files are preserved and not auto-migrated; re-ingest source files into `rag-v2.sqlite3`. Replacement/removal of stale chunks is atomic, query categories are parameterized, and concurrent writes use separate connections.
 - Bound the exact O(n) vector scan to 10,000 total chunks. This is a deliberate small-corpus limit, not an approximate vector-search or throughput claim.
 - Upgrade FastAPI/Starlette, pypdf and pytest after a dated complete dependency audit found advisories in the old graph. Remove the unused Chroma/NumPy/PostHog graph; published Chroma versions had no fix for two advisories at review time. Keep actual runtime and dependency audit evidence separate.
+- Move the default setup and declared CI target to Python 3.12. Use the supported HTTPX2 TestClient path instead of Starlette's deprecated HTTPX fallback; no deprecation filter is added. Bootstrap pip/setuptools is pinned and audited separately in the virtual environment.
 - Retain all 42 ingest/protocol/CLI cases and add nine real SQLite regression cases for restart, failed-replacement rollback, parameterized categories/stale removal, index capacity, concurrent writers and preservation/rejection of incompatible existing databases. The earlier genuine-model result belongs to preview.2; each later exact package is tested and recorded separately.
 
 ## 0.3.0-preview.2 — local structured-output correction, not published

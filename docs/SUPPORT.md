@@ -1,6 +1,6 @@
 # Support and acceptance gates
 
-Version `0.3.0-preview.3` targets Python 3.10, .NET 10 and local SQLite on Windows first. Default extraction remains model-free; generation is opt-in. CI declares Python/C# fixture checks on Ubuntu and Windows; remote CI results must be observed after pushing. Synthetic protocol tests and dated actual Qwen2.5-1.5B / llama.cpp CPU results are distinguished in [LOCAL_MODEL](LOCAL_MODEL.md). Schema-constrained format consistency does not establish factual or conflict-handling quality.
+Version `0.3.0-preview.3` targets Python 3.12, .NET 10 and local SQLite on Windows first. Default extraction remains model-free; generation is opt-in. CI declares Python/C# fixture checks on Ubuntu and Windows; remote CI results must be observed after pushing. Synthetic protocol tests and dated actual Qwen2.5-1.5B / llama.cpp CPU results are distinguished in [LOCAL_MODEL](LOCAL_MODEL.md). Schema-constrained format consistency does not establish factual or conflict-handling quality.
 
 | Gate | Local evidence | Still needed |
 | --- | --- | --- |

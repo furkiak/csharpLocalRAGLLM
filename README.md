@@ -8,10 +8,10 @@
 
 ## Quick start
 
-Use Python 3.10 and .NET SDK 10. On Windows PowerShell, from a clean checkout:
+Use a maintained Python 3.12 environment and .NET SDK 10. On Windows PowerShell, from a clean checkout:
 
 ```powershell
-py -3.10 -m venv .venv
+py -3.12 -m venv .venv
 .\.venv\Scripts\python -m pip install -r requirements-bootstrap.txt
 .\.venv\Scripts\python -m pip install -r requirements-dev.txt
 dotnet build CSharpLocalRag.csproj -c Release
@@ -29,7 +29,7 @@ dotnet run --project CSharpLocalRag.csproj -- ask "What is the return period?"
 dotnet run --project CSharpLocalRag.csproj -- ask "What is the shipping fee?"
 ```
 
-The first question returns the exact `30 days` source sentence with `source_id`, relative path and chunk; the second returns `status: no_answer`. The sample handbook is synthetic. On Linux/macOS replace the first command with `python3.10 -m venv .venv` and use `.venv/bin/python` for Python commands. The C# project needs the .NET 10 SDK on the chosen platform.
+The first question returns the exact `30 days` source sentence with `source_id`, relative path and chunk; the second returns `status: no_answer`. The sample handbook is synthetic. On Linux/macOS replace the first command with `python3.12 -m venv .venv` and use `.venv/bin/python` for Python commands. The C# project needs the .NET 10 SDK on the chosen platform.
 
 `requirements.txt` pins the application dependencies, including the patched FastAPI/Starlette and pypdf versions; it is not a full transitive lock. SQLite comes from Python's standard library. The sample does not load Chroma, NumPy, PostHog, `torch` or `transformers`. A dated full dependency audit and the reason for this change are documented in [DEPENDENCIES.md](docs/DEPENDENCIES.md). Run `python -m pytest -q` and `python eval/run.py` after dependency upgrades.
 
