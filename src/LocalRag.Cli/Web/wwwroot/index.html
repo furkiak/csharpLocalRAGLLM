@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>localrag</title>
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<div class="shell">
+  <aside class="sidebar glass" id="sidebar" aria-label="Library">
+    <header class="brand">
+      <img src="/icon.svg" alt="" width="34" height="34">
+      <div>
+        <h1>localrag</h1>
+        <p>Your documents, answered offline</p>
+      </div>
+      <button class="icon-btn only-mobile" id="close-sidebar" aria-label="Close the library">✕</button>
+    </header>
+
+    <div class="status" id="status" role="status">
+      <span class="dot"></span><span id="status-text">Checking the AI server…</span>
+    </div>
+
+    <section class="panel">
+      <h2>Add documents</h2>
+      <label class="drop" id="drop" tabindex="0">
+        <input type="file" id="file-input" multiple hidden>
+        <span class="drop-icon" aria-hidden="true">＋</span>
+        <span><strong>Drop files</strong> or click to choose</span>
+        <small>PDF · Word · Markdown · text · HTML · code</small>
+      </label>
+      <form class="folder" id="folder-form" autocomplete="off">
+        <input id="folder-path" type="text" placeholder="or a folder: D:\Docs" aria-label="Folder to index" spellcheck="false">
+        <button type="submit" class="btn">Index</button>
+      </form>
+      <div class="progress" id="progress" hidden>
+        <div class="bar"><span id="progress-bar"></span></div>
+        <small id="progress-text"></small>
+      </div>
+    </section>
+
+    <section class="panel library">
+      <div class="panel-head">
+        <h2>Library</h2>
+        <span class="count" id="doc-count">0</span>
+      </div>
+      <input id="filter" type="search" placeholder="Filter" aria-label="Filter documents">
+      <ul class="docs" id="docs"></ul>
+      <p class="muted empty-docs" id="empty-docs">No documents yet. Add a few files to get started.</p>
+    </section>
+
+    <footer class="models" id="models"></footer>
+  </aside>
+
+  <main class="main">
+    <header class="topbar glass">
+      <button class="icon-btn only-mobile" id="open-sidebar" aria-label="Open the library">☰</button>
+      <div class="traffic" aria-hidden="true"><i></i><i></i><i></i></div>
+      <h2>Ask your documents</h2>
+      <button class="btn ghost" id="new-chat">New chat</button>
+    </header>
+
+    <section class="messages" id="messages" aria-live="polite">
+      <div class="welcome" id="welcome">
+        <img src="/icon.svg" alt="" width="64" height="64">
+        <h3>Ask anything about your files</h3>
+        <p>Answers come only from your documents, with numbered sources you can open. Nothing leaves this computer.</p>
+        <div class="suggestions" id="suggestions">
+          <button class="chip">Summarise the most important points</button>
+          <button class="chip">What are the deadlines mentioned?</button>
+          <button class="chip">Which document talks about security?</button>
+        </div>
+      </div>
+    </section>
+
+    <form class="composer glass" id="composer" autocomplete="off">
+      <textarea id="question" rows="1" placeholder="Ask a question…" aria-label="Question"></textarea>
+      <button type="submit" class="send" id="send" aria-label="Send">↑</button>
+    </form>
+    <p class="hint">Enter to send · Shift+Enter for a new line · answers can be wrong, check the sources</p>
+  </main>
+</div>
+
+<div class="toast glass" id="toast" role="status" hidden></div>
+<script src="/app.js"></script>
+</body>
+</html>

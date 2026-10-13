@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>localrag</AssemblyName>
+    <RootNamespace>LocalRag.Cli</RootNamespace>
+    <Description>Chat with your own documents, fully offline: index PDF, Word, Markdown and text files and ask questions with Ollama or any OpenAI-compatible server. Command line and a local web app.</Description>
+
+    <!-- dotnet tool install -g LocalRag -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>localrag</ToolCommandName>
+    <PackageId>LocalRag</PackageId>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="LocalRag.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Spectre.Console" Version="0.57.2" />
+    <PackageReference Include="System.CommandLine" Version="2.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LocalRag.Core\LocalRag.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Web\wwwroot\**" LogicalName="wwwroot/%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Link="README.md" />
+  </ItemGroup>
+
+</Project>

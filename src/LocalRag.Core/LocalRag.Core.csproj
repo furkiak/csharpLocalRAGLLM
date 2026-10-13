@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>LocalRag</RootNamespace>
+    <PackageId>LocalRag.Core</PackageId>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Local retrieval-augmented generation for .NET: read PDF, Word, Markdown and text files, index them in SQLite with hybrid (vector + full-text) search and answer questions with Ollama or any OpenAI-compatible server — with sources.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="LocalRag.Tests" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Link="README.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
+    <PackageReference Include="PdfPig" Version="0.1.16" />
+    <PackageReference Include="System.Numerics.Tensors" Version="10.0.12" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,28 @@
+<Project>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <NuGetAudit>true</NuGetAudit>
+  </PropertyGroup>
+
+  <!-- Shared package metadata -->
+  <PropertyGroup>
+    <Version>2.0.0</Version>
+    <Authors>Furkan Akça</Authors>
+    <Copyright>Copyright (c) Furkan Akça</Copyright>
+    <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/furkiak/csharpLocalRAGLLM</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/furkiak/csharpLocalRAGLLM</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>rag;llm;ollama;local-ai;embeddings;vector-search;semantic-search;pdf;sqlite</PackageTags>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+</Project>

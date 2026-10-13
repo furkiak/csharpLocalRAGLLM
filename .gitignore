@@ -1,0 +1,17 @@
+bin/
+obj/
+artifacts/
+publish/
+dist/
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+TestResults/
+
+# a local index created while trying the samples
+.localrag/
+*.db
+*.db-wal
+*.db-shm

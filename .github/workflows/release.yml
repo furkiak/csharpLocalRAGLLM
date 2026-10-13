@@ -1,0 +1,110 @@
+name: Release
+
+# Pushing a version tag (for example v2.0.0) builds single-file apps for Windows, Linux and macOS and publishes a
+# GitHub release with the matching CHANGELOG section. When the repository secret NUGET_API_KEY exists, the library
+# (LocalRag.Core) and the dotnet tool (LocalRag) are pushed to NuGet as well.
+
+on:
+  push:
+    tags: [ "v*" ]
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - { os: windows-latest, rid: win-x64,     archive: zip }
+          - { os: ubuntu-latest,  rid: linux-x64,   archive: tar }
+          - { os: macos-latest,   rid: osx-arm64,   archive: tar }
+          - { os: macos-latest,   rid: osx-x64,     archive: tar }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Check the tag against the version
+        shell: bash
+        run: |
+          version="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props)"
+          [ "v$version" = "$GITHUB_REF_NAME" ] || { echo "::error::Tag $GITHUB_REF_NAME does not match <Version>$version</Version>"; exit 1; }
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Test
+        run: dotnet test LocalRag.sln -c Release
+
+      - name: Publish
+        shell: bash
+        run: |
+          dotnet publish src/LocalRag.Cli/LocalRag.Cli.csproj -c Release -r ${{ matrix.rid }} --self-contained true \
+            -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true \
+            -p:DebugType=none -p:GenerateDocumentationFile=false -o out
+          cp README.md LICENSE out/
+          mkdir -p dist
+          name="localrag-$VERSION-${{ matrix.rid }}"
+          if [ "${{ matrix.archive }}" = zip ]; then
+            (cd out && 7z a -tzip "../dist/$name.zip" . > /dev/null)
+          else
+            tar -czf "dist/$name.tar.gz" -C out .
+          fi
+          ls -l dist
+
+      - name: Smoke test
+        shell: bash
+        if: matrix.rid != 'osx-x64'
+        run: |
+          ./out/localrag --version
+          ./out/localrag list --db ./smoke.db
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.rid }}
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    name: Publish the release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: dist-*
+          merge-multiple: true
+
+      - name: Pack the NuGet packages
+        run: dotnet pack LocalRag.sln -c Release -o packages
+
+      - name: Push to NuGet
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        if: env.NUGET_API_KEY != ''
+        run: dotnet nuget push "packages/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          # The CHANGELOG section of this version, without its heading.
+          awk -v v="$version" '$0 ~ "^## "v"( |$)" {found=1; next} found && /^## / {exit} found {print}' CHANGELOG.md > notes.md
+          [ -s notes.md ] || { echo "::error::CHANGELOG.md has no '## $version' section"; exit 1; }
+          (cd dist && sha256sum -- * > SHA256SUMS.txt)
+          gh release create "$GITHUB_REF_NAME" dist/* packages/*.nupkg --title "localrag $version" --notes-file notes.md
